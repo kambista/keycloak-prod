@@ -21,11 +21,11 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker auth for Artifact Registry
+      - name: Docker auth  Artifact Registry
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build and push image
+      - name: Build and push imagen
         run: |
           docker buildx create --use || true
           docker buildx build \
@@ -33,17 +33,15 @@ jobs:
             -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/keycloak/keycloak-custom:latest \
             --push .
 
-      - name: Setup SSH key
+      - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy on VM
+      - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} '
-            cd /opt/keycloak &&
-            docker compose pull &&
-            docker compose up -d
+            /opt/keycloak/scripts/deploy.sh
           '
